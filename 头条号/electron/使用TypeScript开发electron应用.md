@@ -81,6 +81,7 @@ app.on("window-all-closed", () => {
     </body>
 </html>
 ```
+
 ![index.html](./images/index-html.png)
 
 ## 运行代码
@@ -88,6 +89,9 @@ app.on("window-all-closed", () => {
 ```
 npm start
 ```
+
 ![npm start](./images/npm-start.png)
+
 就能显示Hello World窗口了。
 ![Hello World Window](./images/helloworld.png)
+
