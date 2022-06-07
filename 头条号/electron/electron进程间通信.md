@@ -196,6 +196,8 @@ window.electronAPI.menuMessage((event, message) => {
 ## 模式4: renderer到renderer process
 
 renderer process之前没有直接的联系。
+
 所以如果需要renderer process之间通信，就需要使用ipcMain/ipcRenderer，然后用main process作为中转。
+
 还有一个方案，就是通过main process传递*MessagePort*给两个renderer。这样他们可以通过*MessagePort*进行通信。
 
