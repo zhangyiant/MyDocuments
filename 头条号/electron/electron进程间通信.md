@@ -62,5 +62,76 @@ btn.addEventListener('click', () => {
 
 运行结果：
 
-![Set title](./images/set-title-output.gif)
+![Set Title](./images/set-title-output.gif)
+
+## 模式2: renderer process和main process双向通信
+
+其实只要各定义一条通信通道，就能实现双向通信。但是由于这样的场景应用非常多，所以Electron直接定义了`invoke`和`handle`用来方便实现双向的通信。
+
+
+我们先实现一个fileOpen的handler，用于返回打开文件对话框的结果。
+
+```
+async function handleFileOpen() {
+    const { canceled, filePaths } = await dialog.showOpenDialog(
+        {
+            title: "Open a file"
+        }
+    );
+    if (canceled) {
+        return;
+    } else {
+        return filePaths[0];
+    }
+}
+
+function createWindow() {
+...
+    ipcMain.handle('open-dialog', handleFileOpen);
+...
+}
+```
+
+![handleFileOpen](./images/handle-file-open.png)
+
+接着修改preload.ts，暴露open-dialog API。
+
+```
+import { contextBridge, ipcRenderer } from 'electron';
+
+contextBridge.exposeInMainWorld('electronAPI', {
+    setTitle: (title: string) => ipcRenderer.send('set-title', title),
+    openDialog: () => ipcRenderer.invoke('open-dialog')
+});
+```
+
+![openDialog API](./images/open-dialog-api.png)
+
+接着html里面添加一个新的button，和一个`<strong>`标记，用来显示结果。
+
+```
+        <button id="open" type="button">Open Dialog</button>
+        File Path: <strong id="filePath"></strong>
+```
+
+![open button](./images/open-dialog-button.png)
+
+最后添加js，调用新的openDialog API。
+
+```
+const openBtn = document.getElementById('open');
+const outputLabel = document.getElementById('filePath');
+openBtn.addEventListener('click', async () => {
+    const filename = await window.electronAPI.openDialog();
+    outputLabel.innerText = filename;
+});
+```
+
+![call openDialog API](./images/call-open-dialog.png)
+
+运行结果：
+
+![open dialog result](./images/open-dialog-output.png)
+
+## 模式3: main process到renderer process通信
 
