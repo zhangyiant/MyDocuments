@@ -4,7 +4,7 @@
 
 在Electron里面，进程间通信依赖于IPC channels。由`ipcMain`和`ipcRenderer`模块完成通信。
 
-## 模式1: Renderer到Main（单项）
+## 模式1: Renderer到Main（单向）
 
 通过在renderer process调用`ipcRenderer.send()`，以及main process调用`ipcMain.on()`注册event listener实现。
 
@@ -134,4 +134,68 @@ openBtn.addEventListener('click', async () => {
 ![open dialog result](./images/open-dialog-output.png)
 
 ## 模式3: main process到renderer process通信
+
+在WebContents对象里面有个send方法，用于把消息发送给renderer process。
+通过ipcRenderer的on方法，注册事件处理函数。
+
+我们首先在main process里面添加一个菜单，用于向renderer process发送消息。
+
+```
+    const menu = Menu.buildFromTemplate([
+        {
+            label: app.name,
+            submenu: [
+                {
+                    label: 'Update Message',
+                    click: () => win.webContents.send('update-message', 'Hello from main process')
+                }
+            ]
+        }
+    ]);
+
+    Menu.setApplicationMenu(menu);
+```
+
+![menu setup](./images/menu-setup.png)
+
+接着我们在preload.ts里面定义API。
+
+```
+    menuMessage: (callback: (event: any, message: string) => void) => ipcRenderer.on('update-message', callback)
+```
+
+这里先不管event是什么类型的，所以先定义成了*any*。
+
+![menuMessage API](./images/menu-message-api.png)
+
+然后我们定义一个`<strong>`标签，用于显示发过来的message。
+
+```
+        <strong id="message"></strong>
+```
+
+![message label](./images/message-label.png)
+
+最有修改renderer.js，注册callback函数。
+
+```
+const messageLabel = document.getElementById('message');
+window.electronAPI.menuMessage((event, message) => {
+    messageLabel.innerText = message;
+});
+```
+
+![call menuMessage](./images/call-message.png)
+
+这样，当点击菜单的时候，就会发送消息到renderer process。并且renderer process会显示消息内容。
+
+![update menu](./images/update-menu.png)
+
+![display message](./images/display-message.png)
+
+## 模式4: renderer到renderer process
+
+renderer process之前没有直接的联系。
+所以如果需要renderer process之间通信，就需要使用ipcMain/ipcRenderer，然后用main process作为中转。
+还有一个方案，就是通过main process传递*MessagePort*给两个renderer。这样他们可以通过*MessagePort*进行通信。
 
