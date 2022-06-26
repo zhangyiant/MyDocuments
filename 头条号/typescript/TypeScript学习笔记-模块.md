@@ -200,3 +200,119 @@ console.log(code);
 
 ![import commonjs](./images/ts-mod-import-commonjs.png)
 
+## CommonJs语法
+
+大多数npm的模块都会使用CommonJS的格式发布。就算你在使用上面所说的ES Module，如果对CommonJS的语法有所了解的话，也对你的一些调试工作是有帮助的。
+
+### 导出
+
+CommonJS里面的导出，使用的全局对象module里面的exports属性。
+
+```
+function absolute(num: number) {
+    if (num < 0) return num * -1;
+    return num;
+}
+
+module.exports = {
+    pi: 3.14,
+    squareTwo: 1.41,
+    phi: 1.61,
+    absolute,
+}
+```
+
+![CommonJS export](./images/ts-mod-js-export.png)
+
+然后使用`require()`来import导出的对象。
+
+```
+const math = require('./math');
+
+console.log("pi = ", math.pi);
+console.log("abs(-1) = ", math.absolute(-1));
+```
+
+![CommonJS import](./images/ts-mod-js-import.png)
+
+也可以使用destructuring功能，导入分解的出来的对象。
+
+```
+const { absolute } = require('./math');
+
+console.log("abs(-1) = ", absolute(-1));
+```
+
+![CommonJS import destructuring](./images/ts-mod-js-import-destructure.png)
+
+### CommonJS和ES Modules互操作
+
+CommonJS和ES Modules在功能上并不完全匹配。在TypeScript里面有一个编译选项**esModuleInterop**用来减少这两者之间的问题。
+
+## TypeScript模块解析选项
+
+所谓模块解析(Module Resolution)就是根据import或者require之后的字符串来决定它们指的到底是哪个文件。
+
+TypeScript有两种解析策略：经典模式和Node模式。经典模式是在module选项不是commonjs的时候的默认选项，只是为了向前兼容。而Node模式，使用的直接是CommonJS里面的一套机制，只是会额外检查.ts和.d.ts文件。
+
+在TSConfig参数里面还有很多会影响到模块解析策略：*moduleResolution*, *baseUrl*, *paths*, *rootDirs*。
+
+具体需要参考手册。
+
+## TypeScript的模块输出选项
+
+有两个选项会影响到最后转换出来的是什么样子的JavaScript代码。
+
+- *target*用来决定转换出来的是哪个标准的JavaScript代码
+- *module*用来决定模块之间是用那种方式进行互操作。
+
+使用那种*target*是有你的JavaScript运行时来决定的。如果你想运行在比较旧的浏览器上，那么你就需要使用比较早期的版本的target。
+
+模块之间的通信是通过模块加载器(Module loader)来进行的。*module*选项就用来决定使用哪一种。运行时的时候模块加载器就会负责定位和加载依赖的模块。
+
+比如下面的代码：
+
+```
+import { absolute } from './math.js';
+
+console.log("abs(-1) = ", absolute(-1));
+```
+
+使用ES2020, 转换出来的代码没有什么变化。
+
+```
+import { absolute } from './math.js';
+console.log("abs(-1) = ", absolute(-1));
+```
+
+使用CommonJS
+
+```
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const math_js_1 = require("./math.js");
+console.log("abs(-1) = ", (0, math_js_1.absolute)(-1));
+```
+
+使用UMD
+
+```
+(function (factory) {
+    if (typeof module === "object" && typeof module.exports === "object") {
+        var v = factory(require, exports);
+        if (v !== undefined) module.exports = v;
+    }
+    else if (typeof define === "function" && define.amd) {
+        define(["require", "exports", "./math.js"], factory);
+    }
+})(function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const math_js_1 = require("./math.js");
+    console.log("abs(-1) = ", (0, math_js_1.absolute)(-1));
+});
+```
+
+## TypeScript命名空间
+
+TypeScript早期使用自己的模块格式，成为命名空间。尽管这个功能并没有被废弃，但是随着ES Module的标准化，建议新代码全部使用ES Module的格式。
