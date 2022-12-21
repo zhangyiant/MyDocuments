@@ -4,7 +4,7 @@
 
 常用的工具，就是**lipo**，不过**Apple clang**本来就支持直接编译出**universal binary**，所以使用**lipo**这一步也就省了。
 
-如果是用Xcode进行构建项目，直接有*Architurectures*这个构建选项，在里面可以选择*arm*和*intel*。
+如果是用Xcode进行构建项目，直接有*Architectures*这个构建选项，在里面可以选择*arm*和*intel*。
 
 ![Architectures Option](./images/Architecures%20option%20in%20Xcode.png)
 
@@ -49,6 +49,18 @@ cmake --build .
 运行结果如下：
 ![build输出](./images/universal-build_output.png)
 
+由于我的**intel**的电脑，所以编译出来的HelloWorld程序只有x86_64的代码。
+```
+test % file HelloWorld 
+HelloWorld: Mach-O 64-bit executable x86_64
+```
 
+接着我们运行cmake的时候配置*CMAKE_OSX_ARCHITECTURES*参数。
 
+```
+cmake .. "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+```
 
+编译出来的就是universal binary。
+
+![输出](./images/universal-build_output_u.png)
